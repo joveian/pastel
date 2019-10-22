@@ -5,6 +5,7 @@ use clap::ArgMatches;
 
 mod color_commands;
 mod colorcheck;
+mod compare;
 mod distinct;
 mod format;
 mod gradient;
@@ -22,6 +23,7 @@ mod traits;
 use traits::{ColorCommand, GenericCommand};
 
 use colorcheck::ColorCheckCommand;
+use compare::CompareCommand;
 use distinct::DistinctCommand;
 use format::FormatCommand;
 use gradient::GradientCommand;
@@ -43,6 +45,7 @@ impl Command {
     pub fn from_string(command: &str) -> Command {
         match command {
             "color" => Command::WithColor(Box::new(show::ShowCommand)),
+            "compare" => Command::WithColor(Box::new(CompareCommand)),
             "saturate" => Command::WithColor(Box::new(color_commands::SaturateCommand)),
             "desaturate" => Command::WithColor(Box::new(color_commands::DesaturateCommand)),
             "lighten" => Command::WithColor(Box::new(color_commands::LightenCommand)),

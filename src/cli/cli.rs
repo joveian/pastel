@@ -64,6 +64,24 @@ pub fn build_cli() -> App<'static, 'static> {
                 .arg(color_arg.clone()),
         )
         .subcommand(
+            SubCommand::with_name("compare")
+                .about("Compare two colors")
+                .long_about(
+                    "Calculate the contrast ratio of two colors.\n\n\
+                     Example:\n  \
+                       pastel compare black white")
+                .arg(
+                    colorspace_arg.clone()
+                )
+                .arg(
+                    Arg::with_name("base")
+                        .value_name("color")
+                        .help("The base color which will be compared to the other colors")
+                        .required(true),
+                )
+                .arg(color_arg.clone()),
+        )
+        .subcommand(
             SubCommand::with_name("list")
                 .about("Show a list of available color names")
                 .arg(

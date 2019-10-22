@@ -22,6 +22,61 @@ impl Output<'_> {
         }
     }
 
+    pub fn compare_color_tty(&mut self, config: &Config, color1: &Color, color2: &Color) -> Result<()> {
+        let checkerboard_padding = 2;
+        let color_panel_size = 12;
+
+        let checkerboard_size_x = checkerboard_padding * 2 + color_panel_size * 2;
+        let checkerboard_size_y = checkerboard_padding * 2 + color_panel_size;
+
+        let checkerboard_position_y: usize = 0;
+        let checkerboard_position_x: usize = config.padding;
+
+        let color_panel_position_y: usize =
+            checkerboard_position_y + (checkerboard_size_y - color_panel_size) / 2;
+
+        let color1_panel_position_x: usize = config.padding + checkerboard_padding;
+        let color2_panel_position_x: usize = color1_panel_position_x + color_panel_size;
+
+        let text_position_x: usize = checkerboard_size_x + 2 * config.padding;
+        let text_position_y: usize = 0;
+
+        let mut canvas = Canvas::new(checkerboard_size_y, 51, config.brush);
+        canvas.draw_checkerboard(
+            checkerboard_position_y,
+            checkerboard_position_x,
+            checkerboard_size_y,
+            checkerboard_size_x,
+            &Color::graytone(0.94),
+            &Color::graytone(0.71),
+        );
+
+        canvas.draw_rect(
+            color_panel_position_y,
+            color1_panel_position_x,
+            color_panel_size,
+            color_panel_size,
+            color1,
+        );
+
+        canvas.draw_rect(
+            color_panel_position_y,
+            color2_panel_position_x,
+            color_panel_size,
+            color_panel_size,
+            color2,
+        );
+
+        canvas.draw_text(
+            text_position_y,
+            text_position_x,
+            &format!("Contrast: {:.02}", color1.contrast_ratio(color2)),
+        );
+
+        canvas.print(self.handle)
+    }
+
+
     pub fn show_color_tty(&mut self, config: &Config, color: &Color) -> Result<()> {
         let checkerboard_size: usize = 16;
         let color_panel_size: usize = 12;
@@ -110,6 +165,21 @@ impl Output<'_> {
             writeln!(self.handle)?;
         } else {
             writeln!(self.handle, "{}", color.to_hsl_string(Format::NoSpaces))?;
+        }
+        self.colors_shown += 1;
+
+        Ok(())
+    }
+
+    pub fn compare_colors(&mut self, config: &Config, color1: &Color, color2: &Color) -> Result<()> {
+        if config.interactive_mode {
+            if self.colors_shown < 1 {
+                writeln!(self.handle)?
+            };
+            self.compare_color_tty(config, color1, color2)?;
+            writeln!(self.handle)?;
+        } else {
+            writeln!(self.handle, "{:.02}", color1.contrast_ratio(color2))?;
         }
         self.colors_shown += 1;
 
