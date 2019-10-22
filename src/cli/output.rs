@@ -41,7 +41,7 @@ impl Output<'_> {
         let text_position_x: usize = checkerboard_size_x + 2 * config.padding;
         let text_position_y: usize = 0;
 
-        let mut canvas = Canvas::new(checkerboard_size_y, 51, config.brush);
+        let mut canvas = Canvas::new(checkerboard_size_y, 53, config.brush);
         canvas.draw_checkerboard(
             checkerboard_position_y,
             checkerboard_position_x,
@@ -71,6 +71,18 @@ impl Output<'_> {
             text_position_y,
             text_position_x,
             &format!("Contrast: {:.02}", color1.contrast_ratio(color2)),
+        );
+
+        canvas.draw_text(
+            text_position_y + 2,
+            text_position_x,
+            &format!("Delta-E (1976): {:.02}", color1.distance_delta_e_cie76(color2)),
+        );
+
+        canvas.draw_text(
+            text_position_y + 4,
+            text_position_x,
+            &format!("Delta-E (2000): {:.02}", color1.distance_delta_e_ciede2000(color2)),
         );
 
         canvas.print(self.handle)
