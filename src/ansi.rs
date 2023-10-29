@@ -1,22 +1,35 @@
 use std::borrow::Borrow;
 
-use atty;
 pub use atty::Stream;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 
 use crate::delta_e::ciede2000;
 use crate::{Color, Lab};
 
-lazy_static! {
-    static ref ANSI_LAB_REPRESENTATIONS: Vec<(u8, Lab)> = (16..255)
+static ANSI_LAB_REPRESENTATIONS: Lazy<Vec<(u8, Lab)>> = Lazy::new(|| {
+    (16..255)
         .map(|code| (code, Color::from_ansi_8bit(code).to_lab()))
-        .collect();
-}
+        .collect()
+});
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Mode {
     Ansi8Bit,
     TrueColor,
+}
+
+#[derive(Debug)]
+pub struct UnknownColorModeError(pub String);
+
+impl Mode {
+    pub fn from_mode_str(mode_str: &str) -> Result<Option<Self>, UnknownColorModeError> {
+        match mode_str {
+            "24bit" | "truecolor" => Ok(Some(Mode::TrueColor)),
+            "8bit" => Ok(Some(Mode::Ansi8Bit)),
+            "off" => Ok(None),
+            value => Err(UnknownColorModeError(value.into())),
+        }
+    }
 }
 
 fn cube_to_8bit(code: u8) -> u8 {
@@ -37,7 +50,7 @@ pub trait AnsiColor {
 impl AnsiColor for Color {
     /// Create a color from an 8-bit ANSI escape code
     ///
-    /// See: https://en.wikipedia.org/wiki/ANSI_escape_code
+    /// See: <https://en.wikipedia.org/wiki/ANSI_escape_code>
     fn from_ansi_8bit(code: u8) -> Color {
         match code {
             0 => Color::black(),
@@ -83,12 +96,12 @@ impl AnsiColor for Color {
     /// Approximate a color by its closest 8-bit ANSI color (as measured by the perceived
     /// color distance).
     ///
-    /// See: https://en.wikipedia.org/wiki/ANSI_escape_code
+    /// See: <https://en.wikipedia.org/wiki/ANSI_escape_code>
     fn to_ansi_8bit(&self) -> u8 {
         let self_lab = self.to_lab();
         ANSI_LAB_REPRESENTATIONS
             .iter()
-            .min_by_key(|(_, lab)| ciede2000(&self_lab, &lab) as i32)
+            .min_by_key(|(_, lab)| ciede2000(&self_lab, lab) as i32)
             .expect("list of codes can not be empty")
             .0
     }
@@ -107,7 +120,7 @@ impl AnsiColor for Color {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct Style {
     foreground: Option<Color>,
     background: Option<Color>,
@@ -191,18 +204,6 @@ impl Style {
     }
 }
 
-impl Default for Style {
-    fn default() -> Style {
-        Style {
-            foreground: None,
-            background: None,
-            bold: false,
-            italic: false,
-            underline: false,
-        }
-    }
-}
-
 impl From<Color> for Style {
     fn from(color: Color) -> Style {
         Style {
@@ -244,23 +245,32 @@ impl ToAnsiStyle for Color {
 }
 
 #[cfg(not(windows))]
-pub fn get_colormode() -> Mode {
+pub fn get_colormode() -> Option<Mode> {
     use std::env;
+    let env_nocolor = env::var_os("NO_COLOR");
+    if env_nocolor.is_some() {
+        return None;
+    }
 
     let env_colorterm = env::var("COLORTERM").ok();
-    match env_colorterm.as_ref().map(|s| s.as_str()) {
-        Some("truecolor") | Some("24bit") => Mode::TrueColor,
-        _ => Mode::Ansi8Bit,
+    match env_colorterm.as_deref() {
+        Some("truecolor") | Some("24bit") => Some(Mode::TrueColor),
+        _ => Some(Mode::Ansi8Bit),
     }
 }
 
 #[cfg(windows)]
-pub fn get_colormode() -> Mode {
-    // Assume 24bit support on Windows
-    Mode::TrueColor
+pub fn get_colormode() -> Option<Mode> {
+    use std::env;
+    let env_nocolor = env::var_os("NO_COLOR");
+    match env_nocolor {
+        Some(_) => None,
+        // Assume 24bit support on Windows
+        None => Some(Mode::TrueColor),
+    }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct Brush {
     mode: Option<Mode>,
 }
@@ -270,13 +280,17 @@ impl Brush {
         Brush { mode }
     }
 
-    pub fn from_environment(stream: Stream) -> Self {
+    pub fn from_environment(stream: Stream) -> Result<Self, UnknownColorModeError> {
         let mode = if atty::is(stream) {
-            Some(get_colormode())
+            let env_color_mode = std::env::var("PASTEL_COLOR_MODE").ok();
+            match env_color_mode.as_deref() {
+                Some(mode_str) => Mode::from_mode_str(mode_str)?,
+                None => get_colormode(),
+            }
         } else {
             None
         };
-        Brush { mode }
+        Ok(Brush { mode })
     }
 
     pub fn paint<S>(self, text: S, style: impl Into<Style>) -> String

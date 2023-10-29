@@ -4,9 +4,9 @@ use clap::{ArgMatches, Values};
 
 use crate::colorpicker::{print_colorspectrum, run_external_colorpicker};
 use crate::config::Config;
-use crate::parser::parse_color;
 use crate::{PastelError, Result};
 
+use pastel::parser::parse_color;
 use pastel::Color;
 
 pub fn number_arg(matches: &ArgMatches, name: &str) -> Result<f64> {
@@ -60,7 +60,7 @@ impl<'a> ColorArgIterator<'a> {
 
         let line = line.trim();
 
-        parse_color(&line).ok_or(PastelError::ColorParseError(line.to_string()))
+        parse_color(line).ok_or_else(|| PastelError::ColorParseError(line.to_string()))
     }
 
     pub fn from_color_arg(
@@ -79,7 +79,7 @@ impl<'a> ColorArgIterator<'a> {
                 ColorArgIterator::from_color_arg(config, &color_str, print_spectrum)
             }
             color_str => {
-                parse_color(color_str).ok_or(PastelError::ColorParseError(color_str.into()))
+                parse_color(color_str).ok_or_else(|| PastelError::ColorParseError(color_str.into()))
             }
         }
     }
@@ -94,10 +94,10 @@ impl<'a> Iterator for ColorArgIterator<'a> {
                 ref mut config,
                 ref mut args,
                 ref mut print_spectrum,
-            ) => match args.next() {
-                Some(color_arg) => Some(Self::from_color_arg(config, color_arg, print_spectrum)),
-                None => None,
-            },
+            ) => args
+                .next()
+                .map(|color_arg| Self::from_color_arg(config, color_arg, print_spectrum)),
+
             ColorArgIterator::FromStdin => match Self::color_from_stdin() {
                 Ok(color) => Some(Ok(color)),
                 Err(PastelError::CouldNotReadFromStdin) => None,

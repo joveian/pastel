@@ -8,7 +8,7 @@ use pastel::{Fraction, HSLA};
 
 pub struct DistinctCommand;
 
-fn print_iteration(out: &mut dyn Write, brush: &Brush, stats: &IterationStatistics) -> Result<()> {
+fn print_iteration(out: &mut dyn Write, brush: Brush, stats: &IterationStatistics) -> Result<()> {
     let result = stats.distance_result;
     write!(
         out,
@@ -24,12 +24,11 @@ fn print_iteration(out: &mut dyn Write, brush: &Brush, stats: &IterationStatisti
 
 fn print_colors(
     out: &mut dyn Write,
-    brush: &Brush,
+    brush: Brush,
     colors: &[Color],
     closest_pair: Option<(usize, usize)>,
 ) -> Result<()> {
-    let mut ci = 0;
-    for c in colors.iter() {
+    for (ci, c) in colors.iter().enumerate() {
         let tc = c.text_color();
         let mut style = tc.ansi_style();
         style.on(c);
@@ -41,15 +40,9 @@ fn print_colors(
             }
         }
 
-        write!(
-            out,
-            "{} ",
-            brush.paint(format!("{}", c.to_rgb_hex_string(false)), style)
-        )?;
-
-        ci += 1;
+        write!(out, "{} ", brush.paint(c.to_rgb_hex_string(false), style))?;
     }
-    writeln!(out, "")?;
+    writeln!(out)?;
     Ok(())
 }
 
@@ -98,7 +91,7 @@ fn print_distance_matrix(
         let tc = c.text_color();
         let mut style = tc.ansi_style();
         style.on(c);
-        format!("{}", brush.paint(c.to_rgb_hex_string(false), style))
+        brush.paint(c.to_rgb_hex_string(false), style)
     };
 
     write!(out, "\n\n{:6}  ", "")?;
@@ -125,7 +118,7 @@ fn print_distance_matrix(
                 write!(out, "{} ", brush.paint(format!("{:6.2}", dist), style))?;
             }
         }
-        writeln!(out, "")?;
+        writeln!(out)?;
     }
     writeln!(out, "\n")?;
 
@@ -136,7 +129,7 @@ impl GenericCommand for DistinctCommand {
     fn run(&self, out: &mut Output, matches: &ArgMatches, config: &Config) -> Result<()> {
         let stderr = io::stderr();
         let mut stderr_lock = stderr.lock();
-        let brush_stderr = Brush::from_environment(Stream::Stderr);
+        let brush_stderr = Brush::from_environment(Stream::Stderr)?;
         let verbose_output = matches.is_present("verbose");
 
         let count = matches.value_of("number").expect("required argument");
@@ -169,7 +162,7 @@ impl GenericCommand for DistinctCommand {
 
         let mut callback: Box<dyn FnMut(&IterationStatistics)> = if verbose_output {
             Box::new(|stats: &IterationStatistics| {
-                print_iteration(&mut stderr_lock, &brush_stderr, stats).ok();
+                print_iteration(&mut stderr_lock, brush_stderr, stats).ok();
             })
         } else {
             Box::new(|_: &IterationStatistics| {})

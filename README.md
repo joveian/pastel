@@ -1,6 +1,6 @@
 # pastel
 
-[![Build Status](https://img.shields.io/travis/sharkdp/pastel?style=flat-square)](https://travis-ci.org/sharkdp/pastel)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/sharkdp/pastel/CICD.yml?style=flat-square)](https://github.com/sharkdp/pastel/actions)
 [![](https://img.shields.io/github/v/release/sharkdp/pastel?colorB=d7a400&style=flat-square)](https://github.com/sharkdp/pastel/releases)
 [![](https://img.shields.io/crates/l/pastel.svg?colorB=ff7155&style=flat-square)](https://crates.io/crates/pastel)
 [![](https://img.shields.io/crates/v/pastel.svg?colorB=ff69b4&style=flat-square)](https://crates.io/crates/pastel)
@@ -123,15 +123,15 @@ echo " word"
 
 You can download the latest Debian package from the [release page](https://github.com/sharkdp/pastel/releases) and install it via `dpkg`:
 ``` bash
-wget "https://github.com/sharkdp/pastel/releases/download/v0.6.1/pastel_0.6.1_amd64.deb"
-sudo dpkg -i pastel_0.6.1_amd64.deb
+wget "https://github.com/sharkdp/pastel/releases/download/v0.8.1/pastel_0.8.1_amd64.deb"
+sudo dpkg -i pastel_0.8.1_amd64.deb
 ```
 
 ### On Arch Linux
 
-You can install `pastel` from the [AUR package](https://aur.archlinux.org/packages/pastel/):
+You can install `pastel` from the [Extra](https://archlinux.org/packages/extra/x86_64/pastel/) repositories:
 ```
-yay -S pastel
+sudo pacman -S pastel
 ```
 
 ### On Nix
@@ -148,15 +148,56 @@ You can install `pastel` via [Homebrew](https://formulae.brew.sh/formula/pastel)
 brew install pastel
 ```
 
+### On Windows
+
+You can install `pastel` via [Scoop](https://github.com/ScoopInstaller/Main/blob/master/bucket/pastel.json)
+```
+scoop install pastel
+```
+
+#### With Winget
+
+You can install `pastel` via [Winget](https://learn.microsoft.com/en-us/windows/package-manager/):
+```bash
+winget install sharkdp.pastel
+```
+
+### Via snap package
+
+[Get it from the Snap Store](https://snapcraft.io/pastel):
+```
+sudo snap install pastel
+```
+
+### On NetBSD
+Using the package manager:
+```
+pkgin install pastel
+```
+
+From source:
+```
+cd /usr/pkgsrc/graphics/pastel
+make install
+```
+
 ### On other distributions
 
 Check out the [release page](https://github.com/sharkdp/pastel/releases) for binary builds.
 
-### Via cargo
+### Via cargo (source)
 
-If you have Rust 1.35 or higher, you can install `pastel` from source via `cargo`:
+If you do not have cargo, install using [rust's installation documentation](https://doc.rust-lang.org/book/ch01-01-installation.html).
+
+If you have Rust 1.43 or higher, you can install `pastel` from source via `cargo`:
 ```
 cargo install pastel
+```
+
+Alternatively, you can install `pastel` directly from this repository by using
+```
+git clone https://github.com/sharkdp/pastel
+cargo install --path ./pastel
 ```
 
 ## Resources

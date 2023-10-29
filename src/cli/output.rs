@@ -17,7 +17,7 @@ pub struct Output<'a> {
 impl Output<'_> {
     pub fn new(handle: &mut dyn Write) -> Output {
         Output {
-            handle: handle,
+            handle,
             colors_shown: 0,
         }
     }
@@ -102,7 +102,7 @@ impl Output<'_> {
         let text_position_x: usize = checkerboard_size + 2 * config.padding;
         let text_position_y: usize = 0;
 
-        let mut canvas = Canvas::new(checkerboard_size, 51, config.brush);
+        let mut canvas = Canvas::new(checkerboard_size, 60, config.brush);
         canvas.draw_checkerboard(
             checkerboard_position_y,
             checkerboard_position_x,
@@ -120,7 +120,7 @@ impl Output<'_> {
         );
 
         let mut text_y_offset = 0;
-        let similar = similar_colors(&color);
+        let similar = similar_colors(color);
 
         for (i, nc) in similar.iter().enumerate().take(3) {
             if nc.color == *color {
@@ -143,6 +143,7 @@ impl Output<'_> {
             );
         }
 
+        #[allow(clippy::identity_op)]
         canvas.draw_text(
             text_position_y + 0 + text_y_offset,
             text_position_x,

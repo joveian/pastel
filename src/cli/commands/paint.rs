@@ -1,11 +1,11 @@
 use std::io::{self, Read};
 
 use crate::commands::prelude::*;
-use crate::parser::parse_color;
 
 use super::io::ColorArgIterator;
 
 use pastel::ansi::Style;
+use pastel::parser::parse_color;
 
 pub struct PaintCommand;
 
@@ -24,7 +24,7 @@ impl GenericCommand for PaintCommand {
         };
 
         let bg = if let Some(bg) = matches.value_of("on") {
-            Some(parse_color(bg).ok_or(PastelError::ColorParseError(bg.into()))?)
+            Some(parse_color(bg).ok_or_else(|| PastelError::ColorParseError(bg.into()))?)
         } else {
             None
         };

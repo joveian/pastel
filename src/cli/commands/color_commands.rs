@@ -74,7 +74,7 @@ color_command!(MixCommand, config, matches, color, {
 
     let mix = get_mixing_function(matches.value_of("colorspace").expect("required argument"));
 
-    mix(&base, &color, fraction)
+    mix(&base, color, fraction)
 });
 
 color_command!(ColorblindCommand, config, matches, color, {
@@ -135,6 +135,22 @@ color_command!(SetCommand, config, matches, color, {
                 _ => unreachable!(),
             }
             Color::from_hsla(hsla.h, hsla.s, hsla.l, hsla.alpha)
+        }
+        "oklab-l" | "oklab-a" | "oklab-b" => {
+            let mut oklab = color.to_oklab();
+            match property {
+                "oklab-l" => {
+                    oklab.l = value;
+                }
+                "oklab-a" => {
+                    oklab.a = value;
+                }
+                "oklab-b" => {
+                    oklab.b = value;
+                }
+                _ => unreachable!(),
+            }
+            Color::from_oklab(oklab.l, oklab.a, oklab.b, oklab.alpha)
         }
         "lightness" | "lab-a" | "lab-b" => {
             let mut lab = color.to_lab();

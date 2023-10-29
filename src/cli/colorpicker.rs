@@ -16,7 +16,7 @@ pub fn print_colorspectrum(config: &Config) -> Result<()> {
     let mut canvas = Canvas::new(
         width + 2 * config.padding,
         width + 2 * config.padding,
-        Brush::from_environment(Stream::Stderr),
+        Brush::from_environment(Stream::Stderr)?,
     );
     canvas.draw_rect(
         config.padding,
@@ -81,11 +81,17 @@ pub fn run_external_colorpicker(picker: Option<&str>) -> Result<String> {
 
             let color =
                 String::from_utf8(result.stdout).map_err(|_| PastelError::ColorInvalidUTF8)?;
-            let color = color.trim();
+            let color = color.trim().to_string();
 
-            return Ok(color.to_string());
+            // Check if tool requires some post processing of the output
+            if let Some(post_process) = tool.post_process {
+                return post_process(color)
+                    .map_err(|error| PastelError::ColorParseError(error.to_string()));
+            } else {
+                return Ok(color);
+            }
         }
     }
 
-    return Err(PastelError::NoColorPickerFound);
+    Err(PastelError::NoColorPickerFound)
 }

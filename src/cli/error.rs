@@ -1,3 +1,5 @@
+use crate::ansi;
+
 #[derive(Debug)]
 pub enum PastelError {
     UnknownColorMode(String),
@@ -47,10 +49,10 @@ impl PastelError {
                 "The number of fixed colors must be smaller than the total number of colors".into()
             }
             PastelError::ColorPickerExecutionError(name) => {
-                format!("Error while running color picker '{}", name)
+                format!("Error while running color picker '{}'", name)
             }
             PastelError::NoColorPickerFound => {
-                "Could not find any external color picker tool. See 'pastel pick -h' for more information.".into()
+                "Could not find any external color picker tool. See 'pastel pick --help' for more information.".into()
             }
             PastelError::IoError(err) => format!("I/O error: {}", err),
         }
@@ -63,6 +65,12 @@ impl From<std::io::Error> for PastelError {
             std::io::ErrorKind::BrokenPipe => PastelError::StdoutClosed,
             _ => PastelError::IoError(err),
         }
+    }
+}
+
+impl From<ansi::UnknownColorModeError> for PastelError {
+    fn from(err: ansi::UnknownColorModeError) -> PastelError {
+        PastelError::UnknownColorMode(err.0)
     }
 }
 
